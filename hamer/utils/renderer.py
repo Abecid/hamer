@@ -251,8 +251,8 @@ class Renderer:
             return output_img
         
         # Project vertices to the base image
-        # vertices_rotated = (rot[:3, :3] @ vertices.T).T[:, :3]
-        vertices_pixels = self.project_vertices(vertices, camera_pose, self.focal_length, self.focal_length, *camera_center)
+        vertices_rotated = (rot[:3, :3] @ vertices.T).T[:, :3]
+        vertices_pixels = self.project_vertices(vertices_rotated, camera_pose, self.focal_length, self.focal_length, *camera_center)
         output_img = self.visualize_vertices(output_img.copy(), vertices_pixels)
         return output_img, vertices_pixels
     
