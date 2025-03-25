@@ -177,6 +177,7 @@ class Renderer:
                 mesh_base_color=(1.0, 1.0, 0.9),
                 scene_bg_color=(0,0,0),
                 return_rgba=False,
+                get_vertices_pixels=False
                 ) -> np.array:
         """
         Render meshes on input image
@@ -245,7 +246,55 @@ class Renderer:
             output_img = color[:, :, :3]
 
         output_img = output_img.astype(np.float32)
+
+        if get_vertices_pixels:
+            vertices_pixels = self.project_vertices(vertices, camera_pose, self.focal_length, self.focal_length, *camera_center)
+            output_img = self.visualize_vertices(output_img.copy(), vertices_pixels)
+            return output_img, vertices_pixels
+        
         return output_img
+    
+    def visualize_vertices(self, image, vertices_pixels: np.ndarray, radius=2):
+        """
+        Visualize the vertices by projecting them to the base image
+        """
+        for i in range(vertices_pixels.shape[0]):
+            u, v = vertices_pixels[i]
+            if 0 <= u < image.shape[1] and 0 <= v < image.shape[0]:
+                # image[int(v), int(u)] = [1., 0., 0.]  
+                cv2.circle(image, (int(u), int(v)), radius, (0, 0, 255), -1)
+        return image
+    
+    @staticmethod
+    def project_vertices(vertices: np.ndarray, camera_pose: np.ndarray, 
+        fx: float, fy: float, cx: float, cy: float) -> np.ndarray:
+        """
+        Projects 3D vertices into 2D image plane.
+        
+        Args:
+            vertices: (V, 3) numpy array of mesh vertices in world space
+            camera_pose: (4, 4) transformation matrix from camera to world
+            fx, fy, cx, cy: intrinsics
+        
+        Returns:
+            pixels: (V, 2) numpy array of (u, v) image coords for each vertex
+        """
+        # Step 1: Convert to homogeneous coordinates
+        V = vertices.shape[0]
+        vertices_h = np.concatenate([vertices, np.ones((V, 1))], axis=-1)  # (V, 4)
+
+        # Step 2: World to camera space
+        cam_pose_inv = np.linalg.inv(camera_pose)  # (4, 4), transforms world → cam
+        verts_cam = (cam_pose_inv @ vertices_h.T).T  # (V, 4)
+
+        # Step 3: Perspective divide
+        x, y, z = verts_cam[:, 0], verts_cam[:, 1], verts_cam[:, 2]
+        z = -z 
+        u = fx * (x / z) + cx
+        v = fy * (y / z) + cy
+
+        return np.stack([u, v], axis=-1)  # (V, 2)
+
 
     def vertices_to_trimesh(self, vertices, camera_translation, mesh_base_color=(1.0, 1.0, 0.9), 
                             rot_axis=[1,0,0], rot_angle=0, is_right=1):

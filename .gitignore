@@ -153,4 +153,7 @@ dmypy.json
 
 *.zip
 
+# Input path for Hamer
 images
+# Output path for Hamer
+out_demo

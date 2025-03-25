@@ -4,6 +4,7 @@ import argparse
 import os
 import cv2
 import numpy as np
+import time
 
 from hamer.configs import CACHE_DIR_HAMER
 from hamer.models import HAMER, download_models, load_hamer, DEFAULT_CHECKPOINT
@@ -30,6 +31,7 @@ def main():
     parser.add_argument('--rescale_factor', type=float, default=2.0, help='Factor for padding the bbox')
     parser.add_argument('--body_detector', type=str, default='vitdet', choices=['vitdet', 'regnety'], help='Using regnety improves runtime and reduces memory')
     parser.add_argument('--file_type', nargs='+', default=['*.jpg', '*.png'], help='List of file extensions to consider')
+    parser.add_argument('--vert_viz', dest='vert_viz', action='store_true', default=False, help='If set, vertices will be visualized')
 
     args = parser.parse_args()
 
@@ -66,6 +68,10 @@ def main():
 
     # Setup the renderer
     renderer = Renderer(model_cfg, faces=model.mano.faces)
+
+    # "MM_DD_HH_MM"
+    now_folder = time.strftime("%m_%d_%H_%M")
+    args.out_folder = os.path.join(args.out_folder, now_folder)
 
     # Make output directory if it does not exist
     os.makedirs(args.out_folder, exist_ok=True)
@@ -153,12 +159,17 @@ def main():
                 input_patch = batch['img'][n].cpu() * (DEFAULT_STD[:,None,None]/255) + (DEFAULT_MEAN[:,None,None]/255)
                 input_patch = input_patch.permute(1,2,0).numpy()
 
+                get_vertices_pixels = args.vert_viz
+
                 regression_img = renderer(out['pred_vertices'][n].detach().cpu().numpy(),
                                         out['pred_cam_t'][n].detach().cpu().numpy(),
                                         batch['img'][n],
                                         mesh_base_color=LIGHT_BLUE,
                                         scene_bg_color=(1, 1, 1),
+                                        get_vertices_pixels=get_vertices_pixels,
                                         )
+                if get_vertices_pixels:
+                    regression_img, vertices_pixels = regression_img
 
                 if args.side_view:
                     side_img = renderer(out['pred_vertices'][n].detach().cpu().numpy(),
