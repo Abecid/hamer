@@ -289,10 +289,17 @@ class Renderer:
         cam_pose_inv = np.linalg.inv(camera_pose)  # (4, 4), transforms world → cam
         verts_cam = (cam_pose_inv @ vertices_h.T).T  # (V, 4)
 
+        # Fix z
+        original_z = vertices[:, 2] * -1 # (V)
+        original_z = original_z.reshape(-1, 1)
+        original_z = np.concatenate([original_z, np.ones((V, 1))], axis=-1) # (V, 2)
+        original_z_cam = (cam_pose_inv[2][-2:] @ original_z.T).T
+        original_z = original_z_cam * -1
+
         # Step 3: Perspective divide
         x, y, z = verts_cam[:, 0], verts_cam[:, 1], verts_cam[:, 2]
 
-        u = fx * (x / z) + cx
+        u = fx * (x / original_z) + cx
         v = fy * (y / z) + cy
 
         return np.stack([u, v], axis=-1)  # (V, 2)
