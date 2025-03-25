@@ -247,12 +247,14 @@ class Renderer:
 
         output_img = output_img.astype(np.float32)
 
-        if get_vertices_pixels:
-            vertices_pixels = self.project_vertices(vertices, camera_pose, self.focal_length, self.focal_length, *camera_center)
-            output_img = self.visualize_vertices(output_img.copy(), vertices_pixels)
-            return output_img, vertices_pixels
+        if not get_vertices_pixels:
+            return output_img
         
-        return output_img
+        # Project vertices to the base image
+        # vertices_rotated = (rot[:3, :3] @ vertices.T).T[:, :3]
+        vertices_pixels = self.project_vertices(vertices, camera_pose, self.focal_length, self.focal_length, *camera_center)
+        output_img = self.visualize_vertices(output_img.copy(), vertices_pixels)
+        return output_img, vertices_pixels
     
     def visualize_vertices(self, image, vertices_pixels: np.ndarray, radius=2):
         """
@@ -289,7 +291,7 @@ class Renderer:
 
         # Step 3: Perspective divide
         x, y, z = verts_cam[:, 0], verts_cam[:, 1], verts_cam[:, 2]
-        z = -z 
+
         u = fx * (x / z) + cx
         v = fy * (y / z) + cy
 
