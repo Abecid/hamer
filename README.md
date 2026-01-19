@@ -37,7 +37,8 @@ conda activate hamer
 Then, you can install the rest of the dependencies. This is for CUDA 11.7, but you can adapt accordingly:
 ```bash
 pip install torch torchvision --index-url https://download.pytorch.org/whl/cu117
-pip install -e .[all]
+# pip install -e .[all]
+pip install --no-build-isolation -e .[all]
 pip install -v -e third-party/ViTPose
 ```
 
