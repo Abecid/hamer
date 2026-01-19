@@ -161,6 +161,8 @@ def main():
 
                 get_vertices_pixels = args.vert_viz
 
+                black_padding = torch.zeros_like(batch['img'][n])
+
                 regression_img = renderer(out['pred_vertices'][n].detach().cpu().numpy(),
                                         out['pred_cam_t'][n].detach().cpu().numpy(),
                                         batch['img'][n],
@@ -168,6 +170,17 @@ def main():
                                         scene_bg_color=(1, 1, 1),
                                         get_vertices_pixels=get_vertices_pixels,
                                         )
+                
+                just_hand_img = renderer(out['pred_vertices'][n].detach().cpu().numpy(),
+                                        out['pred_cam_t'][n].detach().cpu().numpy(),
+                                        black_padding,
+                                        mesh_base_color=LIGHT_BLUE,
+                                        scene_bg_color=(1, 1, 1),
+                                        get_vertices_pixels=get_vertices_pixels,
+                                        )
+                
+                cv2.imwrite(os.path.join(args.out_folder, f'{img_fn}_{person_id}_hand.png'), 255*just_hand_img[:, :, ::-1])
+
                 if get_vertices_pixels:
                     regression_img, vertices_pixels = regression_img
 
