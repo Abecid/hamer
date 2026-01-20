@@ -171,15 +171,22 @@ def main():
                                         get_vertices_pixels=get_vertices_pixels,
                                         )
                 
-                just_hand_img = renderer(out['pred_vertices'][n].detach().cpu().numpy(),
+                color = renderer(out['pred_vertices'][n].detach().cpu().numpy(),
                                         out['pred_cam_t'][n].detach().cpu().numpy(),
                                         black_padding,
                                         mesh_base_color=LIGHT_BLUE,
                                         scene_bg_color=(1, 1, 1),
                                         get_vertices_pixels=get_vertices_pixels,
+                                        return_rgba=True,
                                         )
+                valid_mask = (color[:, :, -1])[:, :, np.newaxis]
+                just_hand_img = (color[:, :, :3] * valid_mask + (1 - valid_mask) * black_padding.permute(1, 2, 0).cpu().numpy())
+                just_hand_img = just_hand_img.astype(np.float32)
+                just_hand_img = just_hand_img*255 * valid_mask + (1 - valid_mask) * black_padding.permute(1, 2, 0).cpu().numpy()
                 
-                cv2.imwrite(os.path.join(args.out_folder, f'{img_fn}_{person_id}_hand.png'), 255*just_hand_img[:, :, ::-1])
+                cv2.imwrite(os.path.join(args.out_folder, f'{img_fn}_{person_id}_hand.png'), just_hand_img[:, :, ::-1])
+
+                continue
 
                 if get_vertices_pixels:
                     regression_img, vertices_pixels = regression_img
