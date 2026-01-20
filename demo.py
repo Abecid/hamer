@@ -69,9 +69,11 @@ def main():
     # Setup the renderer
     renderer = Renderer(model_cfg, faces=model.mano.faces)
 
+    folder_name = args.img_folder.split("/")[-1]
+
     # "MM_DD_HH_MM"
     now_folder = time.strftime("%m_%d_%H_%M")
-    args.out_folder = os.path.join(args.out_folder, now_folder)
+    args.out_folder = os.path.join(args.out_folder, now_folder, folder_name)
 
     # Make output directory if it does not exist
     os.makedirs(args.out_folder, exist_ok=True)
